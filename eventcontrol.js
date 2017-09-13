@@ -54,8 +54,6 @@
       oncreate: function(item, element) {},
       data: [],
       hammertime: false,
-      items_height: 113,
-      markers_height: 31,
       item_width: 14,
       item_offset: 2,
       item_slot_x: -100,
@@ -65,8 +63,6 @@
     this.element = element;
     this.width = element.width();
 
-    this.items_h = this.settings.items_height;
-    this.markers_h = this.settings.markers_height;
     this.item_width = this.settings.item_width;
     this.item_offset = this.settings.item_offset;
     this.item_slot_x = this.settings.item_slot_x;
@@ -74,8 +70,8 @@
     this._drag_x = 0;
 
     element.addClass('eventcontrol');
-    element.append(['<div class="ec-items ec-draggable" style="top:0px;height:', this.items_h, 'px;"></div>',
-                    '<div class="ec-markers ec-draggable" style="top:', (this.items_h + 1), 'px;height:', this.markers_h, 'px;">',
+    element.append(['<div class="ec-items ec-draggable"></div>',
+                    '<div class="ec-markers ec-draggable">',
                     '<div class="ec-ticks"></div>',
                     '<div class="ec-labels"></div>',
                     '</div>'
@@ -219,7 +215,7 @@
     });
 
     $.each(self.settings.data, function(i, item) {
-      self.items.append('<div class="ec-dot" style="left:0px;top:0px;"></div>');
+      self.items.append('<div class="ec-dot" style="left:0px;"></div>');
       var elem = self.items.children('.ec-dot:last-child');
       elem.data('event', item);
       item._starttime = moment(item.timestamp).valueOf();
@@ -364,27 +360,27 @@
     var tick_idx = 0;
     var label_idx = 0;
 
-    function addlabel(cls, l, t, lbl) {
+    function addlabel(cls, l, lbl) {
       if (l > lastlblend) {
         if (label_idx < existing_labels.length) {
           var label = $(existing_labels[label_idx]);
-          label.css('left', l).css('top', t).text(lbl).addClass(cls).removeClass((cls == 'ec-label') ? 'ec-region-label' : 'ec-label');
+          label.css('left', l).text(lbl).addClass(cls).removeClass((cls == 'ec-label') ? 'ec-region-label' : 'ec-label');
           lastlblend = l + label.width();
           label_idx += 1;
         } else {
-          self.labels.append(['<div class="', cls, '" style="left:', l, 'px;top:', t, 'px;">', lbl, '</div>'].join(""));
+          self.labels.append(['<div class="', cls, '" style="left:', l, 'px;">', lbl, '</div>'].join(""));
           lastlblend = l + self.labels.children('.' + cls + ':last-child').width();
         }
       }
     }
 
-    function addtick(l, t, h) {
+    function addtick(l, t) {
       if (tick_idx < existing_ticks.length) {
         var tick = $(existing_ticks[tick_idx]);
-        tick.css('left', l).css('top', t).css('height', h);
+        tick.css('left', l);
         tick_idx += 1;
       } else {
-        self.ticks.append(['<div class="ec-tick" style="left:', l, 'px;top:', t, 'px;height:', h, 'px;"></div>'].join(''));
+        self.ticks.append(['<div class="ec-tick" style="left:', l, 'px;"></div>'].join(''));
       }
     }
 
@@ -398,12 +394,12 @@
       for (i = 0; i < minor.length; i++) {
         ts = minor[i];
         xoffs = span * (ts - min_time_ms);
-        addtick(xoffs, 1, self.items_h + 1 + self.markers_h);
-        addlabel('ec-label', xoffs + 1, self.items_h + 1, format_time(ts, minor_fmt));
+        addtick(xoffs, 1);
+        addlabel('ec-label', xoffs + 1, format_time(ts, minor_fmt));
       }
     } else {
       for (i = 0; i < major.length; i++) {
-        addtick(span * (major[i] - min_time_ms), 1, self.items_h * 0.5);
+        addtick(span * (major[i] - min_time_ms), 1);
       }
     }
 
@@ -421,7 +417,7 @@
           l = 2;
         }
       }
-      addlabel('ec-region-label', l + 1, self.items_h + self.markers_h - 14, format_time(ts, major_fmt));
+      addlabel('ec-region-label', l + 1, format_time(ts, major_fmt));
     }
 
     for (i = tick_idx; i < existing_ticks.length; i++) {
@@ -433,7 +429,6 @@
 
     var item_offset = self.item_offset;
     var item_slot_x = self.item_slot_x;
-    var item_slot_y = item_offset;
     var item_w = self.item_width;
     var item_d = item_w + item_offset;
     var items = self.items.children('.ec-dot');
@@ -457,21 +452,12 @@
       var x = Math.floor(item_offset + span * (m - min_time_ms));
       var xf = x % item_d;
       x = x - xf;
-      var y = item_offset;
       var pushed = false;
       xoffs = item_slot_x;
       if ((x + xf - item_slot_x) <= item_w) {
         pushed = true;
         x = xoffs;
-        y = item_slot_y + item_d;
-        if (y > self.items_h - item_offset) {
-          xoffs += item_d;
-          x = xoffs;
-          y = item_offset;
-          push_rows += 1;
-        }
       } else {
-        item_slot_y = item_offset;
         push_rows = 0;
       }
 
@@ -483,9 +469,8 @@
       }
 
       item_slot_x = x;
-      item_slot_y = y;
 
-      elem.css('left', x).css('top', y);
+      elem.css('left', x);
     }
   };
 

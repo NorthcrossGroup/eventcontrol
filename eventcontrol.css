@@ -6,16 +6,37 @@
     border: 1px solid #e0e0e0;
     overflow: hidden;
     position: relative;
-    width: 100%;
+    width: 50%;
 }
 
 .eventcontrol .ec-items {
     background: #fafafa;
+    /* height is 113 for the navigable region, + 31 for the markers region.*/
+    height:150px;
     /*border-radius: 3px;*/
 }
 
+.eventcontrol.labels-top .ec-items {
+    background: #fafafa;
+    /* height is 113 for the navigable region, + 31 for the markers region.*/
+    height:180px;
+    /*border-radius: 3px;*/
+}
+
+
 .eventcontrol .ec-markers {
     border-top: 1px solid #fff;
+    height:30px;
+}
+
+.eventcontrol.labels-top .ec-markers {
+    border-top: 0;
+    border-bottom: 1px solid #fff;
+    height:30px;
+    top:0px;
+    width:100%;
+    background:#e3e3e3;
+    position:absolute;
 }
 
 .eventcontrol .ec-dot {
@@ -23,11 +44,16 @@
     padding: 0;
     width: 0px;
     height: 0px;
+    top:0px;
     border: 7px solid;
     border-radius: 4px;
     cursor:pointer;
     background: #fff;
     z-index: 1;
+}
+
+.eventcontrol.labels-top .ec-dot {
+    top:30px;
 }
 
 .eventcontrol .ec-markers .ec-ticks {
@@ -37,6 +63,11 @@
     position: absolute;
     width: 0px;
     border-left: 1px solid #ececec;
+    top:0px;
+    height:150px;
+}
+.eventcontrol .ec-markers .ec-ticks .ec-tick {
+    height:180px;
 }
 
 .eventcontrol .ec-markers .ec-labels {
@@ -44,21 +75,30 @@
 
 .eventcontrol .ec-label {
     position: absolute;
+    top:150px;
     padding: 0;
     font-size: 12px;
     text-align: left;
     white-space: nowrap;
     color: #777;
 }
+.eventcontrol.labels-top .ec-label {
+    top:15px;
+}
 
 .eventcontrol .ec-region-label {
     position: absolute;
+    top:165px;
     padding: 0;
     font-size: 10px;
     font-weight: bold;
     text-align: left;
     white-space: nowrap;
     color: #999;
+}
+
+.eventcontrol.labels-top .ec-region-label {
+    top:0px;
 }
 
 .eventcontrol .ec-draggable {
