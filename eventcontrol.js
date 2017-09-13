@@ -427,6 +427,7 @@
       $(existing_labels[i]).remove();
     }
 
+    //TODO: is it safe to accept that all items are the same width?
     var item_offset = self.item_offset;
     var item_slot_x = self.item_slot_x;
     var item_w = self.item_width;
@@ -441,6 +442,8 @@
       var elem = $(items[i]);
       var item = elem.data('event');
       var m = item._starttime;
+
+      //TODO: what is '6' ?
 
       if ((span * (m - min_time_ms)) < -(item_w + item_offset) * 6) {
         elem.css('display', 'none');
