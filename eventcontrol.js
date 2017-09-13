@@ -2,13 +2,23 @@
 // See COPYING for license.
 
 (function($) {
+  /**
+   * The goal of this function is to return the time increments for the currently rendered timespan
+   * @param h
+   * @param min_time
+   * @param timespan
+   * @returns {*[]}
+   */
   function unit_in_timespan(h, min_time, timespan) {
     var day = 24*3600*1000;
     var year = 365*day;
     if (h > day) {
+      // if the range to show is greater than 4 years
       if (timespan > year*4) {
+        // show the beginning of the first year
         var s = moment(min_time).startOf('year');
         var e = min_time + timespan;
+        //add the first year to the list of ticks
         var r = [s];
         var yy = s.year();
         while (s < e) {
@@ -16,36 +26,44 @@
           s = moment(yy + "-01-01", 'YYYY-MM-DD');
           r.push(s);
         }
-        if (r.length > 20) {
-          r = r.slice(0, 20);
-        }
+        //if (r.length > 20) {
+        //  r = r.slice(0, 20);
+        //}
         return r;
       }
     }
-    var s = min_time - (min_time % h);
-    var e = min_time + timespan;
-    if (h > 15*60*1000) {
-      s -= 3600*1000;
+    var start_time = min_time - (min_time % h);
+    console.log([start_time, min_time, h, (min_time % h)]);
+    //TODO: using MOD here strips out timezone correction values
+    start_time -= moment().utcOffset()*60*1000;
+    console.log([start_time, moment().utcOffset()*60*1000]);
+
+    var end_time = min_time + timespan;
+    // if the increment unit is greater than 15 min, subtract 6 minutes from the start time
+    // TODO: find out why 6 min should be subtracted
+    //if (h > 15*60*1000) {
+    //  start_time -= 3600*1000;
+    //}
+    console.log("Start time is: " + moment(start_time).format());
+    var r = [start_time];
+    while (start_time + h <= end_time) {
+      start_time += h;
+      //if (start_time >= min_time && start_time <= end_time) {
+        r.push(start_time);
+      //}
     }
-    var r = [s];
-    while (s < e) {
-      s += h;
-      if (s >= min_time && s <= e) {
-        r.push(s);
-      }
-    }
-    if (r.length > 20) {
-      r = r.slice(0, 20);
-    }
+    //if (r.length > 20) {
+    //  r = r.slice(0, 20);
+    //}
     return r;
   }
 
   var MIN_SPAN = 10000;
   var MAX_SPAN = 1000 * 3600 * 24 * 365 * 100;
-  var MAJSPANS = [4*365*24*3600*1000, 365*24*3600*1000, 120*24*3600*1000, 42*24*3600*1000, 28*24*3600*1000, 21*24*3600*1000, 14*24*3600*1000, 10*24*3600*1000];
-  var MAJUNITS = [  365*24*3600*1000, 120*24*3600*1000,  31*24*3600*1000, 21*24*3600*1000, 14*24*3600*1000, 7*24*3600*1000,   4*24*3600*1000,  2*24*3600*1000];
-  var MINSPANS = [3*24*3600*1000, 2*24*3600*1000, 24*3600*1000, 12*3600*1000, 6*3600*1000, 3*3600*1000,  3600*1000, 45*60*1000, 30*60*1000, 20*60*1000, 10*60*1000, 5*60*1000, 3*60*1000, 60*1000, 45*1000, 20*1000, 12*1000, 0];
-  var MINUNITS = [  12*3600*1000,    6*3600*1000,  4*3600*1000,  3*3600*1000,   3600*1000,  30*60*1000, 15*60*1000,  5*60*1000,  4*60*1000,  3*60*1000,  2*60*1000,   60*1000,   30*1000, 15*1000, 10*1000,  5*1000,  2*1000, 1000];
+  var MAJSPANS = [];
+  var MAJUNITS = [];
+  var MINSPANS = [];
+  var MINUNITS = [];
 
   var EventControl = function(element, options) {
     this.settings = $.extend({
@@ -59,8 +77,22 @@
       item_width: 14,
       item_offset: 2,
       item_slot_x: -100,
-      displayUTC: false
+      displayUTC: false,
+      date_spans: [4*365*24*3600*1000, 365*24*3600*1000, 120*24*3600*1000, 42*24*3600*1000, 28*24*3600*1000, 21*24*3600*1000, 14*24*3600*1000, 10*24*3600*1000],
+      date_units: [  365*24*3600*1000, 120*24*3600*1000,  31*24*3600*1000, 21*24*3600*1000, 14*24*3600*1000, 7*24*3600*1000,   4*24*3600*1000,  2*24*3600*1000],
+      date_format: ['YYYY','YYYY-MM','YYYY-MM','YYYY-MM-DD','YYYY-MM-DD','YYYY-MM-DD','YYYY-MM-DD','YYYY-MM-DD'],
+      time_spans: [3*24*3600*1000, 2*24*3600*1000, 24*3600*1000, 12*3600*1000, 6*3600*1000, 3*3600*1000,  3600*1000, 45*60*1000, 30*60*1000, 20*60*1000, 10*60*1000, 5*60*1000, 3*60*1000, 60*1000, 45*1000, 20*1000, 12*1000, 0],
+      time_units: [  12*3600*1000,    6*3600*1000,  4*3600*1000,  3*3600*1000,   3600*1000,  30*60*1000, 15*60*1000,  5*60*1000,  4*60*1000,  3*60*1000,  2*60*1000,   60*1000,   30*1000, 15*1000, 10*1000,  5*1000,  2*1000, 1000],
+      time_format: ['HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm','HH:mm:ss'],
+      zoom_min_timespan: null,
+      zoom_max_timespan: null,
+      zoom_speed: 0.25,
     }, options);
+
+    MAJSPANS = this.settings.date_spans;
+    MAJUNITS = this.settings.date_units;
+    MINSPANS = this.settings.time_spans;
+    MINUNITS = this.settings.time_units;
 
     this.element = element;
     this.width = element.width();
@@ -85,13 +117,14 @@
     this.markers = element.children('.ec-markers');
     this.ticks = this.markers.children('.ec-ticks');
     this.labels = this.markers.children('.ec-labels');
-    this.min_time = moment("2070-01-01");
-    this.max_time = moment("1970-01-01");
+    this.min_time = moment(this.settings.data[0].timestamp);
+    this.max_time = moment(this.settings.data[this.settings.data.length - 1].timestamp);
     this.pan_min = this.min_time.clone();
     this.pan_max = this.max_time.clone();
     this.timespan = MAX_SPAN;
     this.max_timespan = MAX_SPAN;
-    this.center_time = this.min_time.valueOf() + MAX_SPAN * 0.5;
+    this.center_time = this.min_time.valueOf() + (this.max_time.valueOf() - this.min_time.valueOf()) * 0.5;
+//    this.center_time = this.min_time.valueOf() + MAX_SPAN * 0.5;
     this.init();
     return this;
   };
@@ -231,23 +264,9 @@
       }, function(event) {
         self.settings.onhover.call(self, item, elem, event, 'out');
       });
-
-      var t = moment(item.timestamp);
-      if (t < self.min_time) {
-        self.min_time = t.clone();
-      }
-      if (t > self.max_time) {
-        self.max_time = t;
-      }
     });
 
-    self.min_time.subtract(5, 's');
-    self.max_time.add(5, 's');
-    self.center_time = self.min_time.valueOf() + (self.max_time.valueOf() - self.min_time.valueOf()) * 0.5;
-
-    self.pan_min = self.min_time.clone();
-    self.pan_max = self.max_time.clone();
-
+    console.log("showing timespan of: " + [self.min_time.clone(), self.max_time.clone()])
     self.update_timespan(self.min_time.clone(), self.max_time.clone());
   };
 
@@ -269,13 +288,17 @@
     var delta;
 
     if (dir < 0) {
-      delta = this.timespan * 0.5;
-      new_min_time.subtract(delta * focus, 'ms');
-      new_max_time.add(delta * (1.0 - focus), 'ms');
+      if(this.timespan > this.settings.zoom_max_timespan || this.settings.zoom_max_timespan == null) {
+        delta = this.timespan * this.settings.zoom_speed;
+        new_min_time.subtract(delta * focus, 'ms');
+        new_max_time.add(delta * (1.0 - focus), 'ms');
+      }
     } else {
-      delta = this.timespan * 0.25;
-      new_min_time.add(delta * focus, 'ms');
-      new_max_time.subtract(delta * (1.0 - focus), 'ms');
+      if(this.timespan > this.settings.zoom_min_timespan || this.settings.zoom_min_timespan == null) {
+        delta = this.timespan * this.settings.zoom_speed;
+        new_min_time.add(delta * focus, 'ms');
+        new_max_time.subtract(delta * (1.0 - focus), 'ms');
+      }
     }
 
     return this.update_timespan(new_min_time, new_max_time);
@@ -285,30 +308,39 @@
     var self = this;
     var element = this.element;
     var i = 0;
-
+console.log("updating timespan");
     self._dirty = false;
     self.width = element.width();
 
-    if (!moment.isMoment(new_min_time)) {
-      new_min_time = moment(new_min_time);
-    }
-    if (!moment.isMoment(new_max_time)) {
-      new_max_time = moment(new_max_time);
-    }
+    //if (!moment.isMoment(new_min_time)) {
+    //  new_min_time = moment(new_min_time);
+    //}
+    //if (!moment.isMoment(new_max_time)) {
+    //  new_max_time = moment(new_max_time);
+    //}
 
     self.timespan = new_max_time.valueOf() - new_min_time.valueOf();
+
     if (self.timespan < MIN_SPAN) {
+      console.log("Timespan is smaller than the minimum span?");
       var ct = self.min_time.valueOf() + (self.max_time.valueOf() - self.min_time.valueOf()) * 0.5;
       new_min_time = moment(ct - MIN_SPAN*0.5);
       new_max_time = moment(ct + MIN_SPAN*0.5);
       self.timespan = new_max_time.valueOf() - new_min_time.valueOf();
     }
 
+    // This is the default display of the timeline
     if (self.max_timespan == MAX_SPAN) {
+      //Widen the timespan of the data being presented so that timepoints don't show flush on either end.
+      console.log("using the max time span: " + self.timespan);
       self.max_timespan = self.timespan * 2;
+      new_min_time = moment(self.center_time - self.max_timespan * 0.5);
+      new_max_time = moment(self.center_time + self.max_timespan * 0.5);
+      self.timespan = self.max_timespan;
     }
 
     if (self.timespan > self.max_timespan) {
+      console.log("more timespan than time available");
       new_min_time = moment(self.center_time - self.max_timespan * 0.5);
       new_max_time = moment(self.center_time + self.max_timespan * 0.5);
       self.timespan = self.max_time.valueOf() - self.min_time.valueOf();
@@ -319,45 +351,44 @@
     var min_time_ms = self.min_time.valueOf();
     var major;
     var minor;
-    var major_fmt = 'YYYY-MM-DD';
-    var minor_fmt = 'HH:mm';
+    var major_fmt = self.settings.date_format[0]?self.settings.date_format[0]:'YYYY-MM-DD';
+    var minor_fmt = self.settings.time_format[0]?self.settings.time_format[0]:'HH:mm';
     var maj_unit = 24*3600*1000;
     var min_unit = null;
 
     var format_time = self.settings.displayUTC ? function(t, fmt) {
       return moment.utc(t).format(fmt);
     } : function(t, fmt) {
+      console.log('using non utc values');
       return moment(t).format(fmt);
     };
 
 
-    if (self.timespan >= 6*24*3600*1000) {
-      min_unit = null;
-      if (self.timespan > 4*365*24*3600*1000) {
-        major_fmt = 'YYYY';
-      } else if (self.timespan > 120*24*3600*1000) {
-        major_fmt = 'YYYY-MM';
-      }
+    //if (self.timespan >= 6*24*3600*1000) {
+    //  min_unit = null;
       for (i = 0; i < MAJSPANS.length; i++) {
         if (self.timespan > MAJSPANS[i]) {
           maj_unit = MAJUNITS[i];
+          if(self.settings.date_format[i]){
+            major_fmt = self.settings.date_format[i];
+          }
           break;
         }
       }
-    } else {
+    //} else {
       for (i = 0; i < MINSPANS.length; i++) {
         if (self.timespan > MINSPANS[i]) {
           min_unit = MINUNITS[i];
+          if(self.settings.time_format[i]){
+            minor_fmt = self.settings.time_format[i];
+          }
           break;
         }
       }
-      if (min_unit < 60*1000) {
-        minor_fmt = 'HH:mm:ss';
-      }
-    }
+    //}
 
+    console.log(["processing majors", maj_unit, min_time_ms, self.timespan]);
     major = unit_in_timespan(maj_unit, min_time_ms, self.timespan);
-
     var lastlblend = -1;
     var existing_ticks = self.ticks.children('.ec-tick');
     var existing_labels = self.labels.children('.ec-label,.ec-region-label');
@@ -384,7 +415,7 @@
         tick.css('left', l).css('top', t).css('height', h);
         tick_idx += 1;
       } else {
-        self.ticks.append(['<div class="ec-tick" style="left:', l, 'px;top:', t, 'px;height:', h, 'px;"></div>'].join(''));
+        self.ticks.append(['<div class="ec-tick" style="left:', l, 'px;top:', t, 'px;height:', h, 'px;" data-ts="', moment(t,'X').format(),'"></div>'].join(''));
       }
     }
 
@@ -392,28 +423,36 @@
     var ts;
     var xoffs;
 
-    if (min_unit !== null) {
-      minor = unit_in_timespan(min_unit, min_time_ms, self.timespan);
+    //if (min_unit !== null) {
 
+      minor = unit_in_timespan(min_unit, min_time_ms, self.timespan);
+    console.log("minor values:" + minor);
+    // combine the major and minor time units so that major lable points get a line.
+    minor = minor.concat(major).sort();
+    ///  minor.sort();
       for (i = 0; i < minor.length; i++) {
         ts = minor[i];
+        // Place a tick on the location where the timestamp is supposed to be.
         xoffs = span * (ts - min_time_ms);
+        console.log(["tick generation", ts, min_time_ms, (ts - min_time_ms)])
         addtick(xoffs, 1, self.items_h + 1 + self.markers_h);
         addlabel('ec-label', xoffs + 1, self.items_h + 1, format_time(ts, minor_fmt));
       }
-    } else {
-      for (i = 0; i < major.length; i++) {
-        addtick(span * (major[i] - min_time_ms), 1, self.items_h * 0.5);
-      }
-    }
+    //} else {
+    //  for (i = 0; i < major.length; i++) {
+    //    addtick(span * (major[i] - min_time_ms), 1, self.items_h * 0.5);
+    //  }
+    //}
 
     lastlblend = -1;
     for (i = 0; i < major.length; i++) {
       ts = major[i];
       var l = span * (ts - min_time_ms);
       if (l < 2) {
+        // if this isn't the last element
         if (i + 1 < major.length) {
           var next = span * (major[i + 1] - min_time_ms);
+          //TODO: what is 60?
           if (next > 60) {
             l = 2;
           }
@@ -421,9 +460,17 @@
           l = 2;
         }
       }
+      console.log("adding label at: " + moment(ts).format());
       addlabel('ec-region-label', l + 1, self.items_h + self.markers_h - 14, format_time(ts, major_fmt));
     }
 
+    //Remove all the previously rendered ticks and labels when refreshing the view.
+    // the first time around there won't be any existing ticks.
+    //TODO: I would expect that this cuases a slight overlay issue since briefly the old ticks and the new ticks will
+    //TODO: coexist together is this okay?
+    $(existing_ticks).each(function(){$(this).remove();});
+    //$(existing_labels).each(function(){$(this).remove();});
+    //TODO: figure out why the above code causes a flicker but the below code doesn't
     for (i = tick_idx; i < existing_ticks.length; i++) {
       $(existing_ticks[i]).remove();
     }
