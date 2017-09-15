@@ -429,52 +429,62 @@
 
     //TODO: is it safe to accept that all items are the same width?
     var item_offset = self.item_offset;
-    var item_slot_x = self.item_slot_x;
     var item_w = self.item_width;
-    var item_d = item_w + item_offset;
     var items = self.items.children('.ec-dot');
 
     span = (self.width - (item_offset * 2)) / self.timespan;
 
-    var push_rows = 0;
-
+    // wrap distance is used for figuring out how far out to wrap
+    // stacked items that are below the timeline viewer.
+    var wrapping_distance = 0;
     for (i = 0; i < items.length; i++) {
       var elem = $(items[i]);
       var item = elem.data('event');
       var m = item._starttime;
 
-      //TODO: what is '6' ?
-
+      //TODO: '6' is 5 pushed columns wide. this should really be changed to
+      //TODO: be less hard coded since item widths can be much wider.
       if ((span * (m - min_time_ms)) < -(item_w + item_offset) * 6) {
         elem.css('display', 'none');
         continue;
-      } else {
-        elem.css('display', '');
       }
 
+      // x is location on the timeline for this item
+      // if other items exist between the width of this one on the timeline
+      // they'll snap to this one, and break apart when there's room.
       var x = Math.floor(item_offset + span * (m - min_time_ms));
-      var xf = x % item_d;
-      x = x - xf;
-      var pushed = false;
-      xoffs = item_slot_x;
-      if ((x + xf - item_slot_x) <= item_w) {
-        pushed = true;
-        x = xoffs;
-      } else {
-        push_rows = 0;
+
+      elem.css('left', x + wrapping_distance);
+
+      if(i > 0) {
+        //get the offset values of the previous item.
+        var previous_dims = $(items[i-1]).offset();
+        previous_dims.width = $(items[i-1]).outerWidth();
+        // if this item occupies the same dimenional space as the previous one,
+        // stack this one below the previous one.
+        if(previous_dims.left <= elem.offset().left && elem.offset().left <= (previous_dims.left + previous_dims.width) ) {
+
+          elem.offset({top: previous_dims.top + elem.outerHeight()});
+          // Check to see if this element crosses the lower boundry of the viewer
+          // if it does, set the wrapping distance so that it can start at the top
+          if(elem.offset().top + elem.outerHeight() > element.offset().top + element.outerHeight()){
+            elem.offset({top: $(items[0]).offset().top});
+            elem.offset({left: previous_dims.left + previous_dims.width});
+            wrapping_distance += previous_dims.width;
+          }
+          else{
+            // make this element align with the previous element
+            //TODO: make this an optional behavior. "flush columns" or something
+            elem.offset({left: previous_dims.left});
+          }
+        }
+        else {
+          // this doesn't overlap the previous item, so pop it back to the top!
+          elem.offset({top: $(items[0]).offset().top});
+          wrapping_distance = 0;
+        }
       }
-
-      if (!pushed) {
-        x += xf;
-      } else if (push_rows > 5) {
-        elem.css('display', 'none');
-        continue;
-      }
-
-      item_slot_x = x;
-
-      elem.css('left', x);
-    }
+   }
   };
 
   $.fn.EventControl = function(options) {
