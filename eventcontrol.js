@@ -54,17 +54,12 @@
       oncreate: function(item, element) {},
       data: [],
       hammertime: false,
-      item_width: 14,
-      item_offset: 2,
       item_slot_x: -100,
       displayUTC: false
     }, options);
 
     this.element = element;
     this.width = element.width();
-
-    this.item_width = this.settings.item_width;
-    this.item_offset = this.settings.item_offset;
     this.item_slot_x = this.settings.item_slot_x;
     this._dragging = null;
     this._drag_x = 0;
@@ -427,12 +422,12 @@
       $(existing_labels[i]).remove();
     }
 
-    //TODO: is it safe to accept that all items are the same width?
-    var item_offset = self.item_offset;
-    var item_w = self.item_width;
+    //********* Last step in the process
+    //Place all the timepoints on the timeline.
+
     var items = self.items.children('.ec-dot');
 
-    span = (self.width - (item_offset * 2)) / self.timespan;
+    span = self.width / self.timespan;
 
     // wrap distance is used for figuring out how far out to wrap
     // stacked items that are below the timeline viewer.
@@ -442,17 +437,17 @@
       var item = elem.data('event');
       var m = item._starttime;
 
-      //TODO: '6' is 5 pushed columns wide. this should really be changed to
-      //TODO: be less hard coded since item widths can be much wider.
-      if ((span * (m - min_time_ms)) < -(item_w + item_offset) * 6) {
-        elem.css('display', 'none');
-        continue;
-      }
+      ////TODO: '6' is 5 pushed columns wide. this should really be changed to
+      ////TODO: be less hard coded since item widths can be much wider.
+      //if ((span * (m - min_time_ms)) < -(item_w + item_offset) * 6) {
+      //  elem.css('display', 'none');
+      //  continue;
+      //}
 
       // x is location on the timeline for this item
       // if other items exist between the width of this one on the timeline
       // they'll snap to this one, and break apart when there's room.
-      var x = Math.floor(item_offset + span * (m - min_time_ms));
+      var x = Math.floor(span * (m - min_time_ms));
 
       elem.css('left', x + wrapping_distance);
 
@@ -474,7 +469,7 @@
           }
           else{
             // make this element align with the previous element
-            //TODO: make this an optional behavior. "flush columns" or something
+            //TODO: make this an optional behavior. "snap-to columns" or something
             elem.offset({left: previous_dims.left});
           }
         }
