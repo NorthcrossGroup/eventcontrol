@@ -6,7 +6,7 @@
     border: 1px solid #e0e0e0;
     overflow: hidden;
     position: relative;
-    width: 50%;
+    width: 100%;
 }
 
 .eventcontrol .ec-items {
@@ -45,6 +45,7 @@
     width: 0px;
     height: 0px;
     top:0px;
+    margin:2px;
     border: 7px solid;
     border-radius: 4px;
     cursor:pointer;
