@@ -114,3 +114,37 @@
   cursor:-moz-grabbing;
   cursor:-webkit-grabbing;
 }
+
+/**** switch the items look like dialogs if preferred
+*/
+
+.eventcontrol.dialogs .ec-dot {
+    width: auto;
+    height:auto;
+    display:inline-block;
+    border:1px solid #666;
+    position:absolute;
+    border-bottom-left-radius: 0px;
+}
+
+.eventcontrol.dialogs .ec-dot:before {
+    content: ' ';
+    position: absolute;
+    width: 0;
+    height: 0;
+    left: -1px;
+    top: 28px;
+    border: 5px solid;
+    border-color: #666 transparent transparent #666;
+}
+
+.eventcontrol.dialogs .ec-dot:after {
+    content: ' ';
+    position: absolute;
+    width: 0;
+    height: 0;
+    left: 0px;
+    top: 28px;
+    border: 4px solid;
+    border-color: #fff transparent transparent #fff;
+}
