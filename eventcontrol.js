@@ -54,6 +54,7 @@
       oncreate: function(item, element) {},
       data: [],
       hammertime: false,
+      flush_events: true, // make the events on the timeline appear flush to their left
       item_slot_x: -100,
       displayUTC: false
     }, options);
@@ -469,8 +470,10 @@
           }
           else{
             // make this element align with the previous element
-            //TODO: make this an optional behavior. "snap-to columns" or something
-            elem.offset({left: previous_dims.left});
+            // this can be disabled if the element being shown is really wide.
+            if(self.settings.flush_events) {
+              elem.offset({left: previous_dims.left});
+            }
           }
         }
         else {
